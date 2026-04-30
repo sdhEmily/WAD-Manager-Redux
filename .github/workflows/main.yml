@@ -28,15 +28,15 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p upload/apps/yawmME
-          cp boot.dol upload/apps/yawmME
-          cp boot.elf upload/apps/yawmME/yawmME_boot.elf
-          cp yawmME/icon.png upload/apps/yawmME
-          cp yawmME/meta.xml upload/apps/yawmME
+          mkdir -p upload/apps/WADManager
+          cp boot.dol upload/apps/WADManager
+          cp boot.elf upload/apps/WADManager/WADManager_boot.elf
+          cp WADManager/icon.png upload/apps/WADManager
+          cp WADManager/meta.xml upload/apps/WADManager
           echo "sha=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with: 
-          name: yawmME-${{ env.sha }}
+          name: WADManager-${{ env.sha }}
           path: upload
