@@ -7,3 +7,4 @@
 build/
 source/boot/build/
 /wiiload
+.DS_Store
