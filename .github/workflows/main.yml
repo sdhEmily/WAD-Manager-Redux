@@ -1,27 +1,14 @@
 name: Build binaries
 
 on:
-  push:
-    branches:
-      - "**"
-    paths-ignore:
-      - '**.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/FUNDING.yml'
-      - '.github/**/*.md'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/FUNDING.yml'
-      - '.github/**/*.md'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: devkitpro/devkitppc:20230110
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Compile
         run: make
@@ -36,7 +23,7 @@ jobs:
           echo "sha=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with: 
           name: WADManager-${{ env.sha }}
           path: upload
