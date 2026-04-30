@@ -9,6 +9,7 @@
 
 #include "sys.h"
 #include "gui.h"
+#include "sound.h"
 #include "menu.h"
 #include "restart.h"
 #include "sys.h"
@@ -174,6 +175,9 @@ int main(int argc, char **argv)
 
 	/* Draw background */
 	Gui_DrawBackground();
+
+	Sound_Init();
+	Sound_Play();
 
 	/* Initialize Wiimote and GC Controller */
 	Wpad_Init();
