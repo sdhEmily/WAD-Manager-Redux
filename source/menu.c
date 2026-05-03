@@ -310,15 +310,6 @@ void Menu_FatDevice(void)
 	if (gSelected >= FatGetDeviceCount())
 		gSelected = 0;
 
-	const u16 konamiCode[] = 
-	{
-		WPAD_BUTTON_UP, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT,
-		WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT, WPAD_BUTTON_B, WPAD_BUTTON_A
-	};
-
-	int codePosition = 0;
-	extern bool skipRegionSafetyCheck;
-
 	char region = '\0';
 	u16 version = 0;
 	
@@ -359,26 +350,10 @@ void Menu_FatDevice(void)
 			
 			printf("\t   Press 1 button to remount source devices.\n");			
 			printf("\t   Press HOME button to restart.\n\n");
-
-			if (skipRegionSafetyCheck)
-			{
-				printf("[+] WARNING: SM region and version checks disabled!\n\n");
-				printf("\t   Press 2 button to reset.\n");
-			}
 				
 
 			u32 buttons = WaitButtons();
 
-			if (deviceOk && buttons & (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN | WPAD_BUTTON_RIGHT | WPAD_BUTTON_LEFT | WPAD_BUTTON_A | WPAD_BUTTON_B))
-			{
-				if (!skipRegionSafetyCheck)
-				{
-					if (buttons & konamiCode[codePosition])
-						++codePosition;
-					else
-						codePosition = 0;
-				}
-			}
 			if (deviceOk && buttons & WPAD_BUTTON_LEFT)
 			{
 				if ((s8)(--gSelected) < 0)
@@ -408,21 +383,8 @@ void Menu_FatDevice(void)
 				gSelected = 0;
 				usleep(500000);
 			}
-			else if (buttons & WPAD_BUTTON_2 && skipRegionSafetyCheck)
-			{
-				skipRegionSafetyCheck = false;
-			}
-			else if (deviceOk && buttons & WPAD_BUTTON_A)
-			{
-				if (codePosition == sizeof(konamiCode) / sizeof(konamiCode[0])) 
-				{
-					skipRegionSafetyCheck = true;
-					printf("[+] Disabled SM region and version checks\n");
-					sleep(3);
-				}
-
+			else if (buttons & WPAD_BUTTON_A)
 				break;
-			}
 		}
 	}
 	else

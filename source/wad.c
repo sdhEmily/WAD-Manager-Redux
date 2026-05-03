@@ -576,11 +576,6 @@ void __Wad_FixTicket(signed_blob *p_tik)
 	}
 }
 
-// Some of the safety checks can block region changing
-// Entering the Konami code turns this true, so it will
-// skip the problematic checks for region changing.
-bool skipRegionSafetyCheck = false;
-
 s32 Wad_Install(FILE *fp)
 {
 	SetPRButtons(false);
@@ -654,44 +649,32 @@ s32 Wad_Install(FILE *fp)
 	{
 		printf("\n    This Title wants IOS%i but the installed version\n    is a stub.\n", TITLE_LOWER(tmd_data->sys_version));
 		ret = -999;
-		goto err;
+		goto out;
 	}
 	
 	if(get_title_ios(TITLE_ID(1, 2)) == tid)
 	{
 		if (( tmd_data->num_contents == 3) && (tmd_data->contents[0].type == 1 && tmd_data->contents[1].type == 0x8001 && tmd_data->contents[2].type == 0x8001))
 		{
-			printf("\n    I won't install a stub System Menu IOS\n");
-			ret = -999;
-			goto err;
-		}
-	}
-	
-	if(tid  == get_title_ios(TITLE_ID(0x10008, 0x48414B00 | 'E')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414B00 | 'P')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414B00 | 'J')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414B00 | 'K')))
-	{
-		if ((tmd_data->num_contents == 3) && (tmd_data->contents[0].type == 1 && tmd_data->contents[1].type == 0x8001 && tmd_data->contents[2].type == 0x8001))
-		{
-			printf("\n    I won't install a stub EULA IOS\n");
-			ret = -999;
-			goto err;
-		}
-	}
-	
-	if(tid  == get_title_ios(TITLE_ID(0x10008, 0x48414C00 | 'E')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414C00 | 'P')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414C00 | 'J')) || tid  == get_title_ios(TITLE_ID(0x10008, 0x48414C00 | 'K')))
-	{
-		if ((tmd_data->num_contents == 3) && (tmd_data->contents[0].type == 1 && tmd_data->contents[1].type == 0x8001 && tmd_data->contents[2].type == 0x8001))
-		{
-			printf("\n    I won't install a stub rgsel IOS\n");
-			ret = -999;
-			goto err;
+			printf("\n    This is a stub System Menu IOS\n    This will break the System Menu!\n");
+			printf("\n    Press A to install it anyway.\n");
+			printf("    Press B skip.");
+			
+			u32 buttons = WaitButtons();
+			
+			if (!(buttons & WPAD_BUTTON_A))
+			{
+				ret = -998;
+				goto out;
+			}
 		}
 	}
 	if (tid == get_title_ios(TITLE_ID(0x10001, 0x48415858)) || tid == get_title_ios(TITLE_ID(0x10001, 0x4A4F4449)))
 	{
 		if ( ( tmd_data->num_contents == 3) && (tmd_data->contents[0].type == 1 && tmd_data->contents[1].type == 0x8001 && tmd_data->contents[2].type == 0x8001) )
 		{
-			printf("\n    Are you sure you wan't to install a stub HBC IOS?\n");
-			printf("\n    Press A to continue.\n");
+			printf("\n    This is a stub Homebrew Channel IOS\n    This will break the Homebrew Channel!\n");
+			printf("\n    Press A to install it anyway.\n");
 			printf("    Press B skip.");
 		
 			u32 buttons = WaitButtons();
@@ -706,7 +689,7 @@ s32 Wad_Install(FILE *fp)
 	
 	if (tid == TITLE_ID(1, 2))
 	{
-		if (skipRegionSafetyCheck || gForcedInstall)
+		if (gForcedInstall)
 			goto skipChecks;
 
 		char region = 0;
@@ -716,51 +699,85 @@ s32 Wad_Install(FILE *fp)
 		
 		if (tmd_data->vwii_title)
 		{
-			printf("\n    I won't install a vWii SM by default.\n\n");
-			printf("\n    If you're really sure what you're doing, next time\n");
-			printf("    select your device using Konami...\n\n");
-
-			ret = -999;
-			goto err;
+			printf("\n    This is a vWii System Menu.\n");
+			printf("    Proceed only if you know what you're doing.\n");
+			printf("\n    Press A to install it anyway.\n");
+			printf("    Press B skip.");
+		
+			u32 buttons = WaitButtons();
+		
+			if (!(buttons & WPAD_BUTTON_A))
+			{
+				ret = -998;
+				goto err;
+			}
 		}
 		
 		if(region == 0)
 		{
-			printf("\n    Unkown System menu region\n    Please check the site for updates\n");
-			
-			ret = -999;
-			goto err;
+			printf("\n    Unknown System Menu region.\n");
+			printf("    Proceed only if you know what you're doing.\n");
+			printf("\n    Press A to install it anyway.\n");
+			printf("    Press B skip.");
+		
+			u32 buttons = WaitButtons();
+		
+			if (!(buttons & WPAD_BUTTON_A))
+			{
+				ret = -998;
+				goto err;
+			}
 		}
 
 		if (!VersionIsOriginal(tmd_data->title_version))
 		{
-			printf("\n    I won't install an unkown SM versions by default.\n\n");
-			printf("\n    Are you installing a tweaked system menu?\n");
-			printf("\n    If you're really sure what you're doing, next time\n");
-			printf("    select your device using Konami...\n\n");
-
-			ret = -999;
-			goto err;
+			printf("\n    Unknown System Menu version.\n");
+			printf("    Proceed only if you know what you're doing.\n");
+			printf("\n    Press A to install it anyway.\n");
+			printf("    Press B skip.");
+		
+			u32 buttons = WaitButtons();
+		
+			if (!(buttons & WPAD_BUTTON_A))
+			{
+				ret = -998;
+				goto err;
+			}
 		}
 
 		if(region != RegionLookupTable[(tmd_data->title_version & 0x0F)])
 		{
-			printf("\n    I won't install the wrong regions SM by default.\n\n");
-			printf("\n    Are you region changing?\n");
-			printf("\n    If you're really sure what you're doing, next time\n");
-			printf("    select your device using Konami...\n\n");
-			
-			ret = -999;
-			goto err;
+			printf("\n    Different region System Menu.\n");
+			printf("    Are you region changing?\n");
+			printf("    Proceed only if you know what you're doing.\n");
+			printf("\n    Press A to install it anyway.\n");
+			printf("    Press B skip.");
+		
+			u32 buttons = WaitButtons();
+		
+			if (!(buttons & WPAD_BUTTON_A))
+			{
+				ret = -998;
+				goto err;
+			}
 		}
 skipChecks:
 		if(tmd_data->title_version < 416)
 		{
 			if(boot2version > 4)
 			{
-				printf("\n    This version of the System Menu\n    is not compatible with your Wii\n");
-				ret = -999;
-				goto err;
+				printf("\n    This version of the System Menu\n    may not be compatible with your Wii\n");
+				printf("    Proceed only if you know what you're doing.\n");
+				printf("\n    Press A to install it anyway.\n");
+				printf("    Press B skip.");
+			
+				u32 buttons = WaitButtons();
+			
+				if (!(buttons & WPAD_BUTTON_A))
+				{
+					ret = -998;
+					goto err;
+				}
 			}
 		}
 
@@ -1065,33 +1082,61 @@ s32 Wad_Uninstall(FILE *fp)
 	//Assorted Checks
 	if (TITLE_UPPER(tid) == 1 && get_title_ios(TITLE_ID(1, 2)) == 0)
 	{
-		printf("\n    I can't determine the System Menus IOS\nDeleting system titles is disabled\n");
-		ret = -999;
-		goto out;
+		printf("\n    Unable to determine your System Menus IOS\n    Deleting system titles is riskier!\n");
+		printf("    Proceed only if you know what you're doing.\n");
+		printf("\n    Press A to continue anyway.\n");
+		printf("    Press B cancel.");
+		
+		u32 buttons = WaitButtons();
+		
+		if (!(buttons & WPAD_BUTTON_A))
+		{
+			ret = -998;
+			goto out;
+		}
 	}
 	if (tid == TITLE_ID(1, 1))
 	{
-		printf("\n    I won't try to uninstall boot2\n");
+		printf("\n    I can't let you do that Dave\n");
 		ret = -999;
 		goto out;
 	}
 	if (tid == TITLE_ID(1, 2))
 	{
-		printf("\n    I won't uninstall the System Menu\n");
-		ret = -999;
-		goto out;
+		printf("\n    This is your System Menu\n");
+		printf("    Proceed only if you know what you're doing.\n");
+		printf("\n    Press A to uninstall anyway.\n");
+		printf("    Press B cancel.");
+		
+		u32 buttons = WaitButtons();
+		
+		if (!(buttons & WPAD_BUTTON_A))
+		{
+			ret = -998;
+			goto out;
+		}
 	}
 	if(get_title_ios(TITLE_ID(1, 2)) == tid)
 	{
-		printf("\n    I won't uninstall the System Menus IOS\n");
-		ret = -999;
-		goto out;
+		printf("\n    This is your System Menus IOS\n");
+		printf("    Proceed only if you know what you're doing.\n");
+		printf("\n    Press A to uninstall anyway.\n");
+		printf("    Press B cancel.");
+		
+		u32 buttons = WaitButtons();
+		
+		if (!(buttons & WPAD_BUTTON_A))
+		{
+			ret = -998;
+			goto out;
+		}
 	}
 	if (tid == get_title_ios(TITLE_ID(0x10001, 0x48415858)) || tid == get_title_ios(TITLE_ID(0x10001, 0x4A4F4449)))
 	{
 		printf("\n    This is the HBCs IOS, uninstalling will break the HBC!\n");
-		printf("\n    Press A to continue.\n");
-		printf("    Press B skip.");
+		printf("    Proceed only if you know what you're doing.\n");
+		printf("\n    Press A to uninstall anyway.\n");
+		printf("    Press B cancel.");
 		
 		u32 buttons = WaitButtons();
 		
@@ -1108,33 +1153,18 @@ s32 Wad_Uninstall(FILE *fp)
 	if((tid  == TITLE_ID(0x10008, 0x48414B00 | 'E') || tid  == TITLE_ID(0x10008, 0x48414B00 | 'P') || tid  == TITLE_ID(0x10008, 0x48414B00 | 'J') || tid  == TITLE_ID(0x10008, 0x48414B00 | 'K') 
 		|| (tid  == TITLE_ID(0x10008, 0x48414C00 | 'E') || tid  == TITLE_ID(0x10008, 0x48414C00 | 'P') || tid  == TITLE_ID(0x10008, 0x48414C00 | 'J') || tid  == TITLE_ID(0x10008, 0x48414C00 | 'K'))) && region == 0)
 	{
-		printf("\n    Unkown SM region\n    Please check the site for updates\n");
-		ret = -999;
-		goto out;
-	}
-	if(tid  == TITLE_ID(0x10008, 0x48414B00 | region))
-	{
-		printf("\n    I won't uninstall the EULA\n");
-		ret = -999;
-		goto out;
-	}	
-	if(tid  == TITLE_ID(0x10008, 0x48414C00 | region))
-	{
-		printf("\n    I won't uninstall rgsel\n");
-		ret = -999;
-		goto out;
-	}	
-	if(tid  == get_title_ios(TITLE_ID(0x10008, 0x48414B00 | region)))
-	{
-		printf("\n    I won't uninstall the EULAs IOS\n");
-		ret = -999;
-		goto out;
-	}	
-	if(tid  == get_title_ios(TITLE_ID(0x10008, 0x48414C00 | region)))
-	{
-		printf("\n    I won't uninstall the rgsel IOS\n");
-		ret = -999;
-		goto out;
+		printf("\n    Unknown System Menu region.\n");
+		printf("    Proceed only if you know what you're doing.\n");
+		printf("\n    Press A to install it anyway.\n");
+		printf("    Press B skip.");
+		
+		u32 buttons = WaitButtons();
+		
+		if (!(buttons & WPAD_BUTTON_A))
+		{
+			ret = -998;
+			goto out;
+		}
 	}
 
 	Con_ClearLine();
